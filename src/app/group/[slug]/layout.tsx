@@ -1,13 +1,26 @@
-import Navbar from "@/components/navbar";
+"use client";
 
-export default async function GroupLayout({
-  params,
+import Navbar from "@/components/navbar";
+import { useAuth, useOrganizationList } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+
+export default function GroupLayout({
   children,
 }: {
-  params: Promise<{ slug: string }>;
   children: React.ReactNode;
 }) {
-  const { slug } = await params;
+  const { setActive, isLoaded } = useOrganizationList();
+  const { orgSlug } = useAuth();
+  const { slug } = useParams() as { slug: string };
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (slug !== orgSlug) {
+      void setActive({ organization: slug });
+    }
+  }, [orgSlug, isLoaded, setActive, slug]);
 
   return (
     <>

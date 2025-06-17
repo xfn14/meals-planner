@@ -1,7 +1,7 @@
 "use client";
 
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
-import { History, Lightbulb, Users } from "lucide-react";
+import { History, Lightbulb, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UserButton from "./clerk/user-button";
@@ -15,6 +15,7 @@ export default function Navbar({ slug }: { slug?: string }) {
     { name: "Group", href: `/group/${slug}`, icon: Users },
     { name: "History", href: `/group/${slug}/history`, icon: History },
     { name: "Recommend", href: `/group/${slug}/recommend`, icon: Lightbulb },
+    { name: "Settings", href: `/group/${slug}/settings`, icon: Settings },
   ];
 
   return (
