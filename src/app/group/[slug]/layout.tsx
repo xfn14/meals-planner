@@ -33,7 +33,9 @@ export default async function GroupLayout({
     <>
       <Navbar slug={slug} />
       <SetActiveOrg slug={slug} />
-      <main className="container mx-auto px-4 py-8">{children}</main>
+      <main className="container mx-auto flex flex-col gap-4 px-4">
+        {children}
+      </main>
     </>
   );
 }
