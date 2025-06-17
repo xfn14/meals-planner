@@ -22,8 +22,6 @@ export default function GroupsTable() {
     return null;
   }
 
-  console.log("User memberships:", userMemberships.data);
-
   return (
     <div>
       {isLoaded && userMemberships.data?.length !== 0 && (

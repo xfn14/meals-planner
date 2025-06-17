@@ -63,6 +63,7 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMeal, setSelectedMeal] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredHistory = history.filter((item) =>
     item.meal.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -107,9 +108,9 @@ export default function HistoryPage() {
           <h1 className="text-3xl font-bold">Meal History</h1>
           <p>Track what you've eaten and when</p>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Mark as Eaten
             </Button>
@@ -159,7 +160,13 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={addMealToHistory}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  addMealToHistory();
+                  setIsDialogOpen(false);
+                }}
+              >
                 Add to History
               </Button>
             </div>
