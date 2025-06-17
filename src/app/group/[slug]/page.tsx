@@ -91,9 +91,7 @@ export default function GroupPage() {
       <div className="flex w-full items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{organization.name}</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Manage your group's meal collection
-          </p>
+          <p>Manage your group's meal collection</p>
         </div>
 
         <div className="flex gap-2">

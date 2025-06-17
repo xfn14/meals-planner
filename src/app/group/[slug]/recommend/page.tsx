@@ -95,9 +95,7 @@ export default function RecommendPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Meal Recommendations</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Get personalized meal suggestions for your group
-          </p>
+          <p>Get personalized meal suggestions for your group</p>
         </div>
       </div>
 

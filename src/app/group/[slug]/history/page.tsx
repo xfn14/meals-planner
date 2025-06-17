@@ -105,9 +105,7 @@ export default function HistoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Meal History</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Track what you've eaten and when
-          </p>
+          <p>Track what you've eaten and when</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
