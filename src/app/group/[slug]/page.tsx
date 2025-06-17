@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useOrganization } from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
 import { Heart, Plus } from "lucide-react";
+import { useState } from "react";
 
 const mockMeals = [
   {
@@ -56,19 +57,34 @@ const mockMembers = [
 ];
 
 export default function GroupPage() {
-  const org = useOrganization();
+  const { organization, isLoaded } = useOrganization();
+  const { user } = useUser();
 
-  if (!org) {
+  const [meals, setMeals] = useState(mockMeals);
+  const [newMealName, setNewMealName] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  if (!isLoaded || !user) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
-
-  const { organization } = org;
 
   if (!organization) {
     return (
       <div className="container mx-auto px-4 py-8">No organization found</div>
     );
   }
+
+  const handleAddMeal = (mealName: string) => {
+    if (!mealName.trim()) return;
+    const newMeal = {
+      id: meals.length + 1,
+      name: mealName,
+      addedBy: user.fullName ?? "Unknown",
+      likes: [],
+    };
+    setMeals([...meals, newMeal]);
+    setNewMealName("");
+  };
 
   return (
     <>
@@ -81,9 +97,9 @@ export default function GroupPage() {
         </div>
 
         <div className="flex gap-2">
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Meal
               </Button>
@@ -99,9 +115,22 @@ export default function GroupPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="mealName">Meal Name</Label>
-                  <Input id="mealName" placeholder="e.g., Chicken Parmesan" />
+                  <Input
+                    id="mealName"
+                    placeholder="e.g., Chicken Parmesan"
+                    value={newMealName}
+                    onChange={(e) => setNewMealName(e.target.value)}
+                  />{" "}
                 </div>
-                <Button className="w-full">Add Meal</Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    handleAddMeal(newMealName);
+                    setIsDialogOpen(false);
+                  }}
+                >
+                  Add Meal
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -109,7 +138,7 @@ export default function GroupPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockMeals.map((meal) => (
+        {meals.map((meal) => (
           <Card key={meal.id}>
             <CardHeader>
               <CardTitle className="text-lg">{meal.name}</CardTitle>
