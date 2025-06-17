@@ -1,31 +1,38 @@
-"use client";
+"use server";
 
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 import Navbar from "@/components/navbar";
-import { useAuth, useOrganizationList } from "@clerk/nextjs";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import SetActiveOrg from "./_components/set-active-org";
 
-export default function GroupLayout({
+export default async function GroupLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { slug: string };
 }) {
-  const { setActive, isLoaded } = useOrganizationList();
-  const { orgSlug } = useAuth();
-  const { slug } = useParams() as { slug: string };
+  const { slug } = await params;
+  const { userId } = await auth();
 
-  useEffect(() => {
-    if (!isLoaded) return;
+  if (!userId) {
+    notFound();
+  }
 
-    if (slug !== orgSlug) {
-      void setActive({ organization: slug });
-    }
-  }, [orgSlug, isLoaded, setActive, slug]);
+  const userOrgs = await (
+    await clerkClient()
+  ).users.getOrganizationMembershipList({ userId });
+
+  const org = userOrgs.data.find((o) => o.organization?.slug === slug);
+
+  if (!org) {
+    notFound();
+  }
 
   return (
     <>
       <Navbar slug={slug} />
-
+      <SetActiveOrg slug={slug} />
       <main className="container mx-auto px-4 py-8">{children}</main>
     </>
   );

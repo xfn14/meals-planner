@@ -13,8 +13,8 @@ export default function Navbar({ slug }: { slug?: string }) {
 
   const navigation = [
     { name: "Group", href: `/group/${slug}`, icon: Users },
-    { name: "History", href: `/group/${slug}/history`, icon: History },
     { name: "Recommend", href: `/group/${slug}/recommend`, icon: Lightbulb },
+    { name: "History", href: `/group/${slug}/history`, icon: History },
     { name: "Settings", href: `/group/${slug}/settings`, icon: Settings },
   ];
 
@@ -30,7 +30,10 @@ export default function Navbar({ slug }: { slug?: string }) {
           <div className="flex gap-1">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === `/group/${slug}`
+                  ? pathname === item.href
+                  : pathname.startsWith(item.href);
 
               return (
                 <Button

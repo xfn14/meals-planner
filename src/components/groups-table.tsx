@@ -14,7 +14,7 @@ import {
 } from "./ui/card";
 
 export default function GroupsTable() {
-  const { userMemberships } = useOrganizationList({
+  const { userMemberships, isLoaded } = useOrganizationList({
     userMemberships: true,
   });
 
@@ -26,7 +26,9 @@ export default function GroupsTable() {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-semibold">Your Groups</h2>
+      {isLoaded && userMemberships.data?.length !== 0 && (
+        <h2 className="mb-6 text-2xl font-semibold">Your Groups</h2>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {userMemberships.data?.map((membership) => (
