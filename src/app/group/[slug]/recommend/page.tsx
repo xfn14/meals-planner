@@ -38,6 +38,10 @@ export default function RecommendPage() {
         historyRes.json(),
       ]);
 
+      console.log("Members:", membersData);
+      console.log("Meals:", mealsData);
+      console.log("History:", historyData);
+
       setMembers(membersData);
       setMeals(mealsData);
       setHistory(historyData);
@@ -67,7 +71,7 @@ export default function RecommendPage() {
     });
 
     const enrichedMeals = mealsLikedByAll.map((meal) => {
-      const mealHistories = history.filter((h: any) => h.mealId === meal.id);
+      const mealHistories = history.filter((h: any) => h.meal === meal.name);
       const lastEaten = mealHistories.length
         ? new Date(
             Math.max(
@@ -94,9 +98,23 @@ export default function RecommendPage() {
 
   const getDaysAgo = (date: Date | null) => {
     if (!date) return "Never";
+
     const today = new Date();
-    const diffTime = Math.abs(today.getTime() - date.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const todayMidnight = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    const dateMidnight = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+
+    const diffTime = todayMidnight.getTime() - dateMidnight.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays === 0 ? "Today" : `${diffDays} days ago`;
   };
 
   return (
@@ -174,9 +192,7 @@ export default function RecommendPage() {
                       <Clock className="h-4 w-4" />
                       <span>
                         Last eaten:{" "}
-                        {meal.lastEaten
-                          ? `${getDaysAgo(meal.lastEaten)} days ago`
-                          : "Never"}
+                        {meal.lastEaten ? getDaysAgo(meal.lastEaten) : "Never"}
                       </span>
                     </div>
                   </div>
