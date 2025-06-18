@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,82 +12,91 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Clock, Lightbulb, Users } from "lucide-react";
-import { useState } from "react";
-
-const mockMeals = [
-  {
-    id: 1,
-    name: "Spaghetti Carbonara",
-    likes: ["Alice", "Bob", "Charlie"],
-    lastEaten: "2024-01-15",
-  },
-  {
-    id: 2,
-    name: "Chicken Tikka Masala",
-    likes: ["Bob", "Diana"],
-    lastEaten: "2024-01-14",
-  },
-  {
-    id: 3,
-    name: "Greek Salad",
-    likes: ["Alice", "Charlie", "Diana"],
-    lastEaten: "2024-01-05",
-  },
-  {
-    id: 4,
-    name: "Mushroom Risotto",
-    likes: ["Alice", "Bob", "Charlie", "Diana"],
-    lastEaten: "2024-01-03",
-  },
-  {
-    id: 5,
-    name: "Thai Green Curry",
-    likes: ["Bob", "Charlie", "Diana"],
-    lastEaten: "2023-12-28",
-  },
-];
-
-const mockMembers = [
-  { id: 1, name: "Alice", avatar: "A" },
-  { id: 2, name: "Bob", avatar: "B" },
-  { id: 3, name: "Charlie", avatar: "C" },
-  { id: 4, name: "Diana", avatar: "D" },
-];
+import { useEffect, useState } from "react";
+import { useOrganization } from "@clerk/nextjs";
+import type { Member } from "@/types";
 
 export default function RecommendPage() {
+  const { organization, isLoaded } = useOrganization();
+  const [members, setMembers] = useState<Member[]>([]);
+  const [meals, setMeals] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
 
-  const toggleMember = (memberName: string) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      const [membersRes, mealsRes, historyRes] = await Promise.all([
+        fetch("/api/members"),
+        fetch("/api/meals"),
+        fetch("/api/history"),
+      ]);
+
+      const [membersData, mealsData, historyData] = await Promise.all([
+        membersRes.json(),
+        mealsRes.json(),
+        historyRes.json(),
+      ]);
+
+      setMembers(membersData);
+      setMeals(mealsData);
+      setHistory(historyData);
+    };
+
+    if (organization && isLoaded) {
+      fetchData();
+    }
+  }, [organization, isLoaded]);
+
+  const toggleMember = (memberId: string) => {
     setSelectedMembers((prev) =>
-      prev.includes(memberName)
-        ? prev.filter((name) => name !== memberName)
-        : [...prev, memberName],
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId],
     );
   };
 
   const generateRecommendations = () => {
     if (selectedMembers.length === 0) return;
 
-    const likedByAll = mockMeals.filter((meal) =>
-      selectedMembers.every((member) => meal.likes.includes(member)),
-    );
-
-    const sorted = likedByAll.sort((a, b) => {
-      const dateA = new Date(a.lastEaten).getTime();
-      const dateB = new Date(b.lastEaten).getTime();
-      return dateA - dateB;
+    const mealsLikedByAll = meals.filter((meal) => {
+      if (!meal.likes) return false;
+      return selectedMembers.every((memberId) =>
+        meal.likes.some((like: any) => like.userId === memberId),
+      );
     });
 
-    setRecommendations(sorted.slice(0, 3));
+    const enrichedMeals = mealsLikedByAll.map((meal) => {
+      const mealHistories = history.filter((h: any) => h.mealId === meal.id);
+      const lastEaten = mealHistories.length
+        ? new Date(
+            Math.max(
+              ...mealHistories.map((h: any) => new Date(h.date).getTime()),
+            ),
+          )
+        : null;
+
+      return {
+        ...meal,
+        lastEaten,
+      };
+    });
+
+    // Sort: meals least recently eaten first
+    const sorted = enrichedMeals.sort((a, b) => {
+      const timeA = a.lastEaten ? a.lastEaten.getTime() : 0;
+      const timeB = b.lastEaten ? b.lastEaten.getTime() : 0;
+      return timeA - timeB;
+    });
+
+    setRecommendations(sorted);
   };
 
-  const getDaysAgo = (dateString: string) => {
-    const date = new Date(dateString);
+  const getDaysAgo = (date: Date | null) => {
+    if (!date) return "Never";
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -111,21 +120,20 @@ export default function RecommendPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {mockMembers.map((member) => (
+            {members.map((member) => (
               <div key={member.id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={member.name}
-                  checked={selectedMembers.includes(member.name)}
-                  onCheckedChange={() => toggleMember(member.name)}
+                  id={member.id}
+                  checked={selectedMembers.includes(member.id)}
+                  onCheckedChange={() => toggleMember(member.id)}
                 />
                 <label
-                  htmlFor={member.name}
+                  htmlFor={member.id}
                   className="flex cursor-pointer items-center gap-2"
                 >
                   <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">
-                      {member.avatar}
-                    </AvatarFallback>
+                    <AvatarImage src={member.avatar} />
+                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">{member.name}</span>
                 </label>
@@ -165,7 +173,10 @@ export default function RecommendPage() {
                     <div className="flex items-center gap-1 text-sm">
                       <Clock className="h-4 w-4" />
                       <span>
-                        Last eaten {getDaysAgo(meal.lastEaten)} days ago
+                        Last eaten:{" "}
+                        {meal.lastEaten
+                          ? `${getDaysAgo(meal.lastEaten)} days ago`
+                          : "Never"}
                       </span>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { db } from "@/server/db";
-import { likes } from "@/server/db/schema";
+import { likes, meals } from "@/server/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,11 +8,24 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { mealId: string } },
 ) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   const mealId = parseInt(await params.mealId, 10);
 
-  if (!userId || isNaN(mealId)) {
+  if (!userId || !orgId || isNaN(mealId)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const [meal] = await db
+    .select()
+    .from(meals)
+    .where(eq(meals.id, mealId))
+    .limit(1);
+
+  if (!meal || meal.orgId !== orgId) {
+    return NextResponse.json(
+      { success: false, error: "Meal not found." },
+      { status: 404 },
+    );
   }
 
   const existingLikes = await db

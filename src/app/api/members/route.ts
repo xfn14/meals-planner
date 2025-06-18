@@ -18,7 +18,7 @@ export const GET = async () => {
     });
 
     const formatted = members.data.map((member) => ({
-      id: member.id,
+      id: member.publicUserData?.userId,
       name:
         member.publicUserData?.firstName || member.publicUserData?.lastName
           ? `${member.publicUserData?.firstName ?? ""} ${member.publicUserData?.lastName ?? ""}`.trim()

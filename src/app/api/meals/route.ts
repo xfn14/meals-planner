@@ -1,7 +1,7 @@
 import { db } from "@/server/db";
 import { likes, meals } from "@/server/db/schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -81,6 +81,18 @@ export async function POST(req: Request) {
 
   if (!name || typeof name !== "string") {
     return NextResponse.json({ error: "Invalid name" }, { status: 400 });
+  }
+
+  const existingMeal = await db
+    .select()
+    .from(meals)
+    .where(and(eq(meals.name, name), eq(meals.orgId, orgId)))
+    .limit(1);
+  if (existingMeal.length > 0) {
+    return NextResponse.json(
+      { error: "Meal with this name already exists." },
+      { status: 409 },
+    );
   }
 
   const [newMeal] = await db

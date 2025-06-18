@@ -16,7 +16,7 @@ export const meals = createTable(
   "meals",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: d.varchar({ length: 256 }).unique().notNull(),
+    name: d.varchar({ length: 256 }).notNull(),
     orgId: d.varchar({ length: 36 }).notNull(),
     authorId: d.varchar({ length: 36 }).notNull(),
     createdAt: d
