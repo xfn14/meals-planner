@@ -26,3 +26,10 @@ export type Member = {
   name: string;
   avatar: string;
 };
+
+export type HistoryEntry = {
+  id: string;
+  meal: string;
+  date: string;
+  eaten: string[];
+};

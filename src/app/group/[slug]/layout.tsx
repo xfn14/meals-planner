@@ -12,6 +12,8 @@ export default async function GroupLayout({
   children: React.ReactNode;
   params: { slug: string };
 }) {
+  // Next.js dynamic route parameters must be awaited
+  // eslint-disable-next-line @typescript-eslint/await-thenable
   const { slug } = await params;
   const { userId } = await auth();
 

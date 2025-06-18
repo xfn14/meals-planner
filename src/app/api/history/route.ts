@@ -21,14 +21,14 @@ export async function GET() {
 
   const grouped = history.reduce((acc: GroupedHistory, item) => {
     const id = item.meal_history.id;
-    if (!acc[id]) {
-      acc[id] = {
-        id,
-        meal: item.meals?.name,
-        date: item.meal_history.createdAt,
-        eaten: [],
-      };
-    }
+
+    acc[id] ??= acc[id] = {
+      id,
+      meal: item.meals?.name,
+      date: item.meal_history.createdAt,
+      eaten: [],
+    };
+
     if (item.meal_eaten_by) {
       acc[id].eaten.push(item.meal_eaten_by.userId);
     }
@@ -45,7 +45,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { mealId, userIds } = await req.json();
+  const { mealId, userIds } = (await req.json()) as {
+    mealId: number;
+    userIds: string[];
+  };
 
   const [meal] = await db
     .select()

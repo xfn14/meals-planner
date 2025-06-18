@@ -9,7 +9,9 @@ export default function SetActiveOrg({ slug }: { slug: string }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    setActive({ organization: slug });
+    setActive({ organization: slug }).catch((err) => {
+      console.error("Failed to set active organization:", err);
+    });
   }, [isLoaded, setActive, slug]);
 
   return null;

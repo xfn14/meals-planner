@@ -2,10 +2,10 @@ import { db } from "@/server/db";
 import { likes, meals } from "@/server/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json()) as { mealId: string };
   const { mealId } = body;
   const parsedMealId = parseInt(mealId, 10);
 

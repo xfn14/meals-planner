@@ -31,43 +31,43 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Member } from "@/types";
+import type { HistoryEntry, Meal, Member } from "@/types";
 import { useOrganization } from "@clerk/nextjs";
 import { Check, History, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function HistoryPage() {
   const { organization, isLoaded } = useOrganization();
-  const [history, setHistory] = useState([]);
-  const [meals, setMeals] = useState([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
 
-  const filteredHistory = history.filter((item: any) =>
-    item.meal?.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredHistory = history.filter((item) =>
+    item.meal.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   useEffect(() => {
-    const fetchData = async () => {
-      const historyRes = await fetch("/api/history");
-      const historyData = await historyRes.json();
-
-      const mealsRes = await fetch("/api/meals");
-      const mealsData = await mealsRes.json();
-
-      const membersRes = await fetch("/api/members");
-      const membersData = await membersRes.json();
-
-      setHistory(historyData);
-      setMeals(mealsData);
-      setMembers(membersData);
-    };
-
     if (organization && isLoaded) {
-      fetchData();
+      const fetchData = async () => {
+        const historyRes = await fetch("/api/history");
+        const historyData = (await historyRes.json()) as HistoryEntry[];
+
+        const mealsRes = await fetch("/api/meals");
+        const mealsData = (await mealsRes.json()) as Meal[];
+
+        const membersRes = await fetch("/api/members");
+        const membersData = (await membersRes.json()) as Member[];
+
+        setHistory(historyData);
+        setMeals(mealsData);
+        setMembers(membersData);
+      };
+
+      void fetchData();
     }
   }, [organization, isLoaded]);
 
@@ -83,7 +83,8 @@ export default function HistoryPage() {
       });
 
       const historyRes = await fetch("/api/history");
-      const historyData = await historyRes.json();
+      const historyData = (await historyRes.json()) as HistoryEntry[];
+
       setHistory(historyData);
       setIsDialogOpen(false);
       setSelectedMealId(null);
@@ -106,7 +107,7 @@ export default function HistoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Meal History</h1>
-          <p>Track what you've eaten and when</p>
+          <p>Track what you&apos;ve eaten and when</p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -120,7 +121,7 @@ export default function HistoryPage() {
             <DialogHeader>
               <DialogTitle>Mark Meal as Eaten</DialogTitle>
               <DialogDescription>
-                Add a meal to today's history
+                Add a meal to today&apos;s history
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -131,7 +132,7 @@ export default function HistoryPage() {
                   <SelectValue placeholder="Select a meal" />
                 </SelectTrigger>
                 <SelectContent>
-                  {meals.map((meal: any) => (
+                  {meals.map((meal) => (
                     <SelectItem key={meal.id} value={meal.id.toString()}>
                       {meal.name}
                     </SelectItem>
@@ -176,10 +177,7 @@ export default function HistoryPage() {
 
               <Button
                 className="w-full"
-                onClick={() => {
-                  addMealToHistory();
-                  setIsDialogOpen(false);
-                }}
+                onClick={() => void addMealToHistory()}
               >
                 Add to History
               </Button>
@@ -218,7 +216,7 @@ export default function HistoryPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {filteredHistory.map((item: any) => (
+            {filteredHistory.map((item) => (
               <div key={item.id} className="flex justify-between border p-4">
                 <div>
                   <div>{item.meal}</div>

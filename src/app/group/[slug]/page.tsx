@@ -36,14 +36,14 @@ export default function GroupPage() {
 
   useEffect(() => {
     if (organization) {
-      fetchMeals();
+      void fetchMeals();
     }
   }, [organization]);
 
-  const fetchMeals = async () => {
+  const fetchMeals = async (): Promise<void> => {
     try {
       const res = await fetch("/api/meals");
-      const data = await res.json();
+      const data = (await res.json()) as Meal[];
 
       console.log("Fetched meals:", data);
 
@@ -85,13 +85,21 @@ export default function GroupPage() {
 
   const handleLike = async (mealId: number) => {
     try {
-      await fetch("/api/meals/like", {
+      const res = await fetch("/api/meals/like", {
         method: "POST",
         body: JSON.stringify({ mealId }),
         headers: {
           "Content-Type": "application/json",
         },
       });
+
+      const result = (await res.json()) as { success: boolean };
+
+      if (!result.success) {
+        toast("Failed to like meal");
+        return;
+      }
+
       await fetchMeals();
     } catch (error) {
       console.error("Error liking meal:", error);
@@ -113,7 +121,7 @@ export default function GroupPage() {
       <div className="flex w-full items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{organization.name}</h1>
-          <p>Manage your group's meal collection</p>
+          <p>Manage your group&apos;s meal collection</p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -14,15 +14,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Clock, Lightbulb, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useOrganization } from "@clerk/nextjs";
-import type { Member } from "@/types";
+import type { HistoryEntry, Member } from "@/types";
+
+type MealLike = {
+  userId: string;
+};
+
+type Meal = {
+  id: string;
+  name: string;
+  likes: MealLike[];
+};
+
+type RecommendedMeal = Meal & {
+  lastEaten: Date | null;
+};
 
 export default function RecommendPage() {
   const { organization, isLoaded } = useOrganization();
   const [members, setMembers] = useState<Member[]>([]);
-  const [meals, setMeals] = useState<any[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedMeal[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,15 +46,9 @@ export default function RecommendPage() {
         fetch("/api/history"),
       ]);
 
-      const [membersData, mealsData, historyData] = await Promise.all([
-        membersRes.json(),
-        mealsRes.json(),
-        historyRes.json(),
-      ]);
-
-      console.log("Members:", membersData);
-      console.log("Meals:", mealsData);
-      console.log("History:", historyData);
+      const membersData = (await membersRes.json()) as Member[];
+      const mealsData = (await mealsRes.json()) as Meal[];
+      const historyData = (await historyRes.json()) as HistoryEntry[];
 
       setMembers(membersData);
       setMeals(mealsData);
@@ -48,7 +56,7 @@ export default function RecommendPage() {
     };
 
     if (organization && isLoaded) {
-      fetchData();
+      void fetchData();
     }
   }, [organization, isLoaded]);
 
@@ -66,17 +74,15 @@ export default function RecommendPage() {
     const mealsLikedByAll = meals.filter((meal) => {
       if (!meal.likes) return false;
       return selectedMembers.every((memberId) =>
-        meal.likes.some((like: any) => like.userId === memberId),
+        meal.likes.some((like) => like.userId === memberId),
       );
     });
 
-    const enrichedMeals = mealsLikedByAll.map((meal) => {
-      const mealHistories = history.filter((h: any) => h.meal === meal.name);
+    const enrichedMeals: RecommendedMeal[] = mealsLikedByAll.map((meal) => {
+      const mealHistories = history.filter((h) => h.meal === meal.name);
       const lastEaten = mealHistories.length
         ? new Date(
-            Math.max(
-              ...mealHistories.map((h: any) => new Date(h.date).getTime()),
-            ),
+            Math.max(...mealHistories.map((h) => new Date(h.date).getTime())),
           )
         : null;
 
@@ -86,7 +92,6 @@ export default function RecommendPage() {
       };
     });
 
-    // Sort: meals least recently eaten first
     const sorted = enrichedMeals.sort((a, b) => {
       const timeA = a.lastEaten ? a.lastEaten.getTime() : 0;
       const timeB = b.lastEaten ? b.lastEaten.getTime() : 0;
@@ -132,9 +137,7 @@ export default function RecommendPage() {
             <Users className="h-5 w-5" />
             Select Members
           </CardTitle>
-          <CardDescription>
-            Choose who you're planning to cook for
-          </CardDescription>
+          <CardDescription>Who will be eating the meal?</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
