@@ -22,8 +22,14 @@ export default function Navbar({ slug }: { slug?: string }) {
     <nav className="container mx-auto flex items-center justify-between p-4">
       <div className="flex items-center gap-4">
         <Link href="/" className="text-primary text-lg font-bold">
-          <span className="hidden md:flex">Meals Planner</span>
-          <span className="md:hidden">MP</span>
+          {pathname === "/" ? (
+            "Meals Planner"
+          ) : (
+            <>
+              <span className="hidden md:flex">Meals Planner</span>
+              <span className="md:hidden">MP</span>
+            </>
+          )}
         </Link>
 
         {slug && (

@@ -94,11 +94,7 @@ export default function GroupPage() {
       });
 
       const result = (await res.json()) as { success: boolean };
-
-      if (!result.success) {
-        toast("Failed to like meal");
-        return;
-      }
+      console.log("Like response:", result);
 
       await fetchMeals();
     } catch (error) {
