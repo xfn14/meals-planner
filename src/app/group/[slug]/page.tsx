@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,12 +23,18 @@ import { useOrganization, useUser } from "@clerk/nextjs";
 import { Heart, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Meal = {
+interface Meal {
   id: number;
   name: string;
   authorId: string;
+  authorName: string;
   createdAt: string;
-};
+  likes: {
+    userId: string;
+    userName: string;
+    userAvatar: string;
+  }[];
+}
 
 export default function GroupPage() {
   const { organization, isLoaded } = useOrganization();
@@ -48,6 +55,9 @@ export default function GroupPage() {
     try {
       const res = await fetch("/api/meals");
       const data = await res.json();
+
+      console.log("Fetched meals:", data);
+
       setMeals(data);
     } catch (error) {
       console.error("Failed to fetch meals:", error);
@@ -73,14 +83,21 @@ export default function GroupPage() {
         return;
       }
 
-      const newMeal: Meal = await res.json();
-      newMeal.authorId = user?.fullName ?? "Unknown";
-      setMeals((prev) => [...prev, newMeal]);
+      await fetchMeals();
       setNewMealName("");
     } catch (error) {
       console.error("Error adding meal:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async (mealId: number) => {
+    try {
+      await fetch(`/api/meals/${mealId}/like`, { method: "POST" });
+      await fetchMeals();
+    } catch (error) {
+      console.error("Error liking meal:", error);
     }
   };
 
@@ -147,15 +164,27 @@ export default function GroupPage() {
           <Card key={meal.id}>
             <CardHeader>
               <CardTitle className="text-lg">{meal.name}</CardTitle>
-              <CardDescription>Added by {meal.authorId}</CardDescription>
+              <CardDescription>Added by {meal.authorName}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Likes feature coming soon
-                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleLike(meal.id)}
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
+                <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2">
+                  {meal.likes.map((like) => (
+                    <Avatar key={like.userId}>
+                      <AvatarImage src={like.userAvatar} />
+                      <AvatarFallback>{like.userName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
               </div>
+              <div className="flex -space-x-2"></div>
             </CardContent>
           </Card>
         ))}

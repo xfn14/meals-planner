@@ -1,7 +1,7 @@
 import { db } from "@/server/db";
-import { meals } from "@/server/db/schema";
+import { likes, meals } from "@/server/db/schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -21,25 +21,52 @@ export async function GET() {
     .from(meals)
     .where(eq(meals.orgId, orgId));
 
+  const mealIds = data.map((meal) => meal.id);
   const authorIds = [...new Set(data.map((meal) => meal.authorId))];
+
+  const likesData = await db
+    .select({
+      mealId: likes.mealId,
+      userId: likes.userId,
+    })
+    .from(likes)
+    .where(inArray(likes.mealId, mealIds));
+
+  const likeUserIds = [...new Set(likesData.map((like) => like.userId))];
+
+  const userIdsToFetch = [...new Set([...authorIds, ...likeUserIds])];
 
   const client = await clerkClient();
   const usersResponse = await client.users.getUserList({
-    userId: authorIds,
+    userId: userIdsToFetch,
   });
 
   const users = usersResponse.data ?? [];
 
   const userMap = new Map(
-    users.map((user) => [user.id, `${user.firstName} ${user.lastName}`]),
+    users.map((user) => [
+      user.id,
+      {
+        name: `${user.firstName} ${user.lastName}`,
+        imageUrl: user.imageUrl,
+      },
+    ]),
   );
 
-  const mealsWithAuthorNames = data.map((meal) => ({
+  const mealsWithLikes = data.map((meal) => ({
     ...meal,
-    authorId: userMap.get(meal.authorId) ?? "Unknown",
+    authorName: userMap.get(meal.authorId)?.name ?? "Unknown",
+    authorAvatar: userMap.get(meal.authorId)?.imageUrl ?? "Unknown",
+    likes: likesData
+      .filter((like) => like.mealId === meal.id)
+      .map((like) => ({
+        userId: like.userId,
+        userName: userMap.get(like.userId)?.name ?? "Unknown",
+        userAvatar: userMap.get(like.userId)?.imageUrl ?? "Unknown",
+      })),
   }));
 
-  return NextResponse.json(mealsWithAuthorNames);
+  return NextResponse.json(mealsWithLikes);
 }
 
 export async function POST(req: Request) {
