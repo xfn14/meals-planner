@@ -85,7 +85,13 @@ export default function GroupPage() {
 
   const handleLike = async (mealId: number) => {
     try {
-      await fetch(`/api/meals/${mealId}/like`, { method: "POST" });
+      await fetch("/api/meals/like", {
+        method: "POST",
+        body: JSON.stringify({ mealId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       await fetchMeals();
     } catch (error) {
       console.error("Error liking meal:", error);

@@ -4,21 +4,21 @@ import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { mealId: string } },
-) {
-  const { userId, orgId } = await auth();
-  const mealId = parseInt(await params.mealId, 10);
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { mealId } = body;
+  const parsedMealId = parseInt(mealId, 10);
 
-  if (!userId || !orgId || isNaN(mealId)) {
+  const { userId, orgId } = await auth();
+
+  if (!userId || !orgId || isNaN(parsedMealId)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const [meal] = await db
     .select()
     .from(meals)
-    .where(eq(meals.id, mealId))
+    .where(eq(meals.id, parsedMealId))
     .limit(1);
 
   if (!meal || meal.orgId !== orgId) {
@@ -31,7 +31,7 @@ export async function POST(
   const existingLikes = await db
     .select()
     .from(likes)
-    .where(and(eq(likes.mealId, mealId), eq(likes.userId, userId)))
+    .where(and(eq(likes.mealId, parsedMealId), eq(likes.userId, userId)))
     .limit(1);
 
   const existingLike = existingLikes[0];
@@ -39,7 +39,7 @@ export async function POST(
   if (existingLike) {
     await db.delete(likes).where(eq(likes.id, existingLike.id));
   } else {
-    await db.insert(likes).values({ mealId, userId });
+    await db.insert(likes).values({ mealId: parsedMealId, userId });
   }
 
   return NextResponse.json({ success: !existingLike });

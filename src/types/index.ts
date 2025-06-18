@@ -11,14 +11,15 @@ export type Meal = {
   }[];
 };
 
-export type GroupedHistory = {
-  [id: number]: {
+export type GroupedHistory = Record<
+  number,
+  {
     id: number;
     meal: string | undefined;
     date: Date;
     eaten: string[];
-  };
-};
+  }
+>;
 
 export type Member = {
   id: string;
