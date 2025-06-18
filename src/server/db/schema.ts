@@ -17,8 +17,8 @@ export const meals = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     name: d.varchar({ length: 256 }).unique().notNull(),
-    orgId: d.varchar({ length: 32 }).notNull(),
-    authorId: d.varchar({ length: 32 }).notNull(),
+    orgId: d.varchar({ length: 36 }).notNull(),
+    authorId: d.varchar({ length: 36 }).notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -36,7 +36,7 @@ export const likes = createTable(
       .integer()
       .notNull()
       .references(() => meals.id, { onDelete: "cascade" }),
-    userId: d.varchar({ length: 32 }).notNull(),
+    userId: d.varchar({ length: 36 }).notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -78,7 +78,7 @@ export const mealEatenBy = createTable(
       .integer()
       .notNull()
       .references(() => mealHistory.id, { onDelete: "cascade" }),
-    userId: d.varchar({ length: 32 }).notNull(),
+    userId: d.varchar({ length: 36 }).notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

@@ -52,7 +52,7 @@ export default function GroupsTable() {
                 </Link>
               </CardTitle>
               <CardDescription>
-                {membership.organization.membersCount} members • 0 meals
+                {membership.organization.membersCount} members
               </CardDescription>
             </CardHeader>
             <CardContent>

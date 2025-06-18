@@ -19,22 +19,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Meal } from "@/types";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { Heart, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-
-interface Meal {
-  id: number;
-  name: string;
-  authorId: string;
-  authorName: string;
-  createdAt: string;
-  likes: {
-    userId: string;
-    userName: string;
-    userAvatar: string;
-  }[];
-}
+import { toast } from "sonner";
 
 export default function GroupPage() {
   const { organization, isLoaded } = useOrganization();
@@ -78,13 +67,15 @@ export default function GroupPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        console.error("Error creating meal:", error);
+        toast("Failed to create meal", {
+          description: "A meal with this name already exists",
+        });
         return;
       }
 
       await fetchMeals();
       setNewMealName("");
+      setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding meal:", error);
     } finally {
@@ -148,7 +139,6 @@ export default function GroupPage() {
                 className="w-full"
                 onClick={async () => {
                   await handleAddMeal(newMealName);
-                  setIsDialogOpen(false);
                 }}
                 disabled={loading}
               >
@@ -173,8 +163,11 @@ export default function GroupPage() {
                   size="icon"
                   onClick={() => handleLike(meal.id)}
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart
+                    className={`h-8 w-8 ${meal.likes.some((like) => like.userId === user.id) ? "text-red-500" : ""}`}
+                  />
                 </Button>
+
                 <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2">
                   {meal.likes.map((like) => (
                     <Avatar key={like.userId}>

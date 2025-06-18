@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: { mealId: string } },
 ) {
   const { userId } = await auth();
-  const mealId = parseInt(params.mealId, 10);
+  const mealId = parseInt(await params.mealId, 10);
 
   if (!userId || isNaN(mealId)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

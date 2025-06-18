@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -25,68 +25,68 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { History, Plus, Search, Calendar, Check } from "lucide-react";
-
-const mockHistory = [
-  { id: 1, meal: "Spaghetti Carbonara", date: "2024-01-15", eaten: [1, 2] },
-  { id: 2, meal: "Chicken Tikka Masala", date: "2024-01-14", eaten: [2, 3] },
-  { id: 3, meal: "Caesar Salad", date: "2024-01-13", eaten: [1, 3] },
-  { id: 4, meal: "Beef Tacos", date: "2024-01-12", eaten: [1, 2, 4] },
-  { id: 5, meal: "Grilled Salmon", date: "2024-01-11", eaten: [3, 4] },
-  { id: 6, meal: "Pizza Margherita", date: "2024-01-10", eaten: [1, 2, 3] },
-  { id: 7, meal: "Roast Chicken", date: "2024-01-09", eaten: [2, 4] },
-  { id: 8, meal: "Pad Thai", date: "2024-01-08", eaten: [1, 3, 4] },
-];
-
-const mockMeals = [
-  "Spaghetti Carbonara",
-  "Chicken Tikka Masala",
-  "Caesar Salad",
-  "Beef Tacos",
-  "Grilled Salmon",
-  "Pizza Margherita",
-  "Roast Chicken",
-  "Pad Thai",
-  "Greek Salad",
-  "Mushroom Risotto",
-];
-
-const mockMembers = [
-  { id: 1, name: "Alice", avatar: "A" },
-  { id: 2, name: "Bob", avatar: "B" },
-  { id: 3, name: "Charlie", avatar: "C" },
-  { id: 4, name: "Diana", avatar: "D" },
-];
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { Member } from "@/types";
+import { useOrganization } from "@clerk/nextjs";
+import { Check, History, Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function HistoryPage() {
-  const [history, setHistory] = useState(mockHistory);
+  const { organization, isLoaded } = useOrganization();
+  const [history, setHistory] = useState([]);
+  const [meals, setMeals] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMeal, setSelectedMeal] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
 
-  const filteredHistory = history.filter((item) =>
-    item.meal.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredHistory = history.filter((item: any) =>
+    item.meal?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const toggleMember = (memberId: number) => {
-    setSelectedMembers((prev) =>
-      prev.includes(memberId)
-        ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId],
-    );
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const historyRes = await fetch("/api/history");
+      const historyData = await historyRes.json();
 
-  const addMealToHistory = () => {
-    if (selectedMeal && selectedMembers.length > 0) {
-      const newEntry = {
-        id: history.length + 1,
-        meal: selectedMeal,
-        date: new Date().toISOString().split("T")[0] ?? "",
-        eaten: selectedMembers,
-      };
-      setHistory([newEntry, ...history]);
-      setSelectedMeal("");
+      const mealsRes = await fetch("/api/meals");
+      const mealsData = await mealsRes.json();
+
+      const membersRes = await fetch("/api/members");
+      const membersData = await membersRes.json();
+
+      setHistory(historyData);
+      setMeals(mealsData);
+      setMembers(membersData);
+    };
+
+    if (organization && isLoaded) {
+      fetchData();
+    }
+  }, [organization, isLoaded]);
+
+  const addMealToHistory = async () => {
+    if (selectedMealId && selectedMembers.length > 0) {
+      await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mealId: selectedMealId,
+          userIds: selectedMembers,
+        }),
+      });
+
+      const historyRes = await fetch("/api/history");
+      const historyData = await historyRes.json();
+      setHistory(historyData);
+      setIsDialogOpen(false);
+      setSelectedMealId(null);
       setSelectedMembers([]);
     }
   };
@@ -108,6 +108,7 @@ export default function HistoryPage() {
           <h1 className="text-3xl font-bold">Meal History</h1>
           <p>Track what you've eaten and when</p>
         </div>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsDialogOpen(true)}>
@@ -123,14 +124,16 @@ export default function HistoryPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Select value={selectedMeal} onValueChange={setSelectedMeal}>
-                <SelectTrigger className="w-full">
+              <Select
+                onValueChange={(value) => setSelectedMealId(Number(value))}
+              >
+                <SelectTrigger>
                   <SelectValue placeholder="Select a meal" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockMeals.map((meal) => (
-                    <SelectItem key={meal} value={meal}>
-                      {meal}
+                  {meals.map((meal: any) => (
+                    <SelectItem key={meal.id} value={meal.id.toString()}>
+                      {meal.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -139,22 +142,33 @@ export default function HistoryPage() {
               <div>
                 <p className="mb-2 font-medium">Select Members:</p>
                 <div className="flex flex-wrap gap-2">
-                  {mockMembers.map((member) => {
-                    const isSelected = selectedMembers.includes(member.id);
+                  {members.map((member) => {
+                    const selected = selectedMembers.includes(member.id);
                     return (
-                      <Button
+                      <button
                         key={member.id}
-                        size="sm"
-                        variant={isSelected ? "default" : "outline"}
-                        onClick={() => toggleMember(member.id)}
-                        className="h-8 w-8 rounded-full p-0"
+                        type="button"
+                        onClick={() =>
+                          setSelectedMembers((prev) =>
+                            prev.includes(member.id)
+                              ? prev.filter((id) => id !== member.id)
+                              : [...prev, member.id],
+                          )
+                        }
+                        className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-transparent transition-colors"
                       >
-                        {isSelected ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          member.avatar
+                        <Avatar className="h-full w-full">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback>
+                            {member.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {selected && (
+                          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
                         )}
-                      </Button>
+                      </button>
                     );
                   })}
                 </div>
@@ -204,38 +218,36 @@ export default function HistoryPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {filteredHistory.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <div className="flex items-center gap-4">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="font-medium">{item.meal}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      {formatDate(item.date)}
-                    </div>
-                  </div>
+            {filteredHistory.map((item: any) => (
+              <div key={item.id} className="flex justify-between border p-4">
+                <div>
+                  <div>{item.meal}</div>
+                  <div>{formatDate(item.date)}</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {item.eaten.length > 0 ? (
-                    item.eaten.map((memberId) => {
-                      const member = mockMembers.find((m) => m.id === memberId);
-                      return (
-                        <Button
-                          key={memberId}
-                          size="sm"
-                          variant="outline"
-                          className="h-6 w-6 rounded-full p-0"
-                        >
-                          {member?.avatar}
-                        </Button>
-                      );
-                    })
-                  ) : (
-                    <span className="text-sm text-gray-400">No members</span>
-                  )}
+
+                <div className="flex gap-2">
+                  {item.eaten.map((uid: string) => {
+                    const member = members.find((m) => m.id === uid);
+                    if (!member) return null;
+
+                    console.log("Member:", member);
+
+                    return (
+                      <TooltipProvider key={uid}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={member.avatar} />
+                              <AvatarFallback>
+                                {member.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent>{member.name}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })}
                 </div>
               </div>
             ))}
