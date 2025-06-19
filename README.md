@@ -1,29 +1,62 @@
-# Create T3 App
+# Meals Planner 🍽️
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A full-stack meal tracking and planning application built with Next.js, TypeScript, Drizzle ORM, Clerk for authentication, and Vercel for deployment.
 
-## What's next? How do I make an app with this?
+## 📝 Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- ✅ **User Authentication** via Clerk
+- ✅ **Organization Support** (for multiple user groups)
+- ✅ **Meal Management** — create, list, and manage meals
+- ✅ **Meal History Tracking** — mark meals as eaten by selected members
+- ✅ **Meal Recommendations** — based on user preferences
+- ✅ **Member Management** within organizations
+- ✅ Responsive UI using **TailwindCSS** & **shadcn/ui components**
+- ✅ API Routes with full type-safety using **Drizzle ORM**
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 🏗️ Tech Stack
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+| Technology      | Usage                                    |
+| --------------- | ---------------------------------------- |
+| **Next.js**     | React framework for SSR & App Router     |
+| **TypeScript**  | Type-safe development                    |
+| **Drizzle ORM** | Database schema & query building         |
+| **PostgreSQL**  | Database (via Vercel or Neon)            |
+| **Clerk**       | Authentication & Organization Management |
+| **TailwindCSS** | Utility-first CSS styling                |
+| **shadcn/ui**   | Pre-built, customizable UI components    |
+| **Vercel**      | Deployment & DNS Management              |
 
-## Learn More
+## 📦 Installation
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+```bash
+git clone https://github.com/yourusername/meals-planner.git
+cd meals-planner
+bun install
+```
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+### Create a `.env.local` file with:
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```dotenv
+DATABASE_URL=your_postgres_connection_string
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+```
 
-## How do I deploy this?
+### Populate the database:
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+```bash
+bun run db:push
+```
+
+## 🚀 Running Locally
+
+```bash
+bun run dev
+```
+
+## 📦 Building for Production
+
+```bash
+bun run build
+bun run start
+```
